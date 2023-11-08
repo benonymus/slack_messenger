@@ -7,14 +7,17 @@ defmodule SlackMessengerWeb.Plugs.APIAuthPlug do
   def init(opts), do: opts
 
   def call(conn, _opts) do
-    [api_key] =
-      get_req_header(conn, "x-api-key")
+    api_key =
+      conn
+      |> get_req_header("x-api-key")
+      |> List.first()
 
-    if api_key == @api_key do
+    if not is_nil(api_key) and api_key == @api_key do
       conn
     else
       conn
-      |> send_resp(401, "Invalid api_key!")
+      |> put_resp_content_type("application/json")
+      |> send_resp(401, Jason.encode!(%{msg: "Invalid api_key!"}))
       |> halt()
     end
   end

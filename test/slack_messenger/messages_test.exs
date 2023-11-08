@@ -1,5 +1,6 @@
 defmodule SlackMessenger.MessagesTest do
   use SlackMessenger.DataCase
+  use Oban.Testing, repo: SlackMessenger.Repo
 
   alias SlackMessenger.Messages
 
@@ -26,6 +27,8 @@ defmodule SlackMessenger.MessagesTest do
       assert {:ok, %Message{} = message} = Messages.create_message(valid_attrs)
       assert message.body == "some body"
       assert message.subject == "some subject"
+
+      assert_enqueued(worker: SlackMessenger.Workers.Post, args: %{id: message.id})
     end
 
     test "create_message/1 with invalid data returns error changeset" do
@@ -51,6 +54,7 @@ defmodule SlackMessenger.MessagesTest do
       message = message_fixture()
       assert {:ok, %Message{}} = Messages.delete_message(message)
       assert_raise Ecto.NoResultsError, fn -> Messages.get_message!(message.id) end
+      assert_enqueued(worker: SlackMessenger.Workers.Delete, args: %{slack_ts: message.slack_ts})
     end
 
     test "change_message/1 returns a message changeset" do

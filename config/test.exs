@@ -8,7 +8,7 @@ import Config
 config :slack_messenger, SlackMessenger.Repo,
   username: "postgres",
   password: "postgres",
-  hostname: "localhost",
+  hostname: System.get_env("PGHOST", "localhost"),
   database: "slack_messenger_test#{System.get_env("MIX_TEST_PARTITION")}",
   pool: Ecto.Adapters.SQL.Sandbox,
   pool_size: 10
@@ -32,4 +32,4 @@ config :logger, level: :warning
 # Initialize plugs at runtime for faster test compilation
 config :phoenix, :plug_init_mode, :runtime
 
-config :slack_messenger, Oban, testing: :inline
+config :slack_messenger, Oban, testing: :manual
