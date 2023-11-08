@@ -4,6 +4,7 @@ defmodule SlackMessenger.Messages do
   """
 
   import Ecto.Query, warn: false
+  alias Ecto.Multi
   alias SlackMessenger.Repo
 
   alias SlackMessenger.Messages.Message
@@ -50,9 +51,19 @@ defmodule SlackMessenger.Messages do
 
   """
   def create_message(attrs \\ %{}) do
-    %Message{}
-    |> Message.changeset(attrs)
-    |> Repo.insert()
+    Multi.new()
+    |> Multi.insert(:message, Message.changeset(%Message{}, attrs))
+    |> Oban.insert(:post_job, fn %{message: message} ->
+      SlackMessenger.Workers.Post.new(%{id: message.id})
+    end)
+    |> Repo.transaction()
+    |> case do
+      {:ok, %{message: message}} ->
+        {:ok, message}
+
+      {:error, _, changeset, _} ->
+        {:error, changeset}
+    end
   end
 
   @doc """
@@ -74,6 +85,24 @@ defmodule SlackMessenger.Messages do
   end
 
   @doc """
+  Updates a message.
+
+  ## Examples
+
+      iex> update_message_slack_ts(message, "1699417072.250789")
+      {:ok, %Message{}}
+
+      iex> update_message_slack_ts(message, 11)
+      {:error, %Ecto.Changeset{}}
+
+  """
+  def update_message_slack_ts(%Message{} = message, slack_ts) do
+    message
+    |> Message.changeset_slack_ts(%{slack_ts: slack_ts})
+    |> Repo.update()
+  end
+
+  @doc """
   Deletes a message.
 
   ## Examples
@@ -86,7 +115,17 @@ defmodule SlackMessenger.Messages do
 
   """
   def delete_message(%Message{} = message) do
-    Repo.delete(message)
+    Multi.new()
+    |> Multi.delete(:message, message)
+    |> Oban.insert(:delete_job, SlackMessenger.Workers.Delete.new(%{slack_ts: message.slack_ts}))
+    |> Repo.transaction()
+    |> case do
+      {:ok, %{message: message}} ->
+        {:ok, message}
+
+      {:error, _, changeset, _} ->
+        {:error, changeset}
+    end
   end
 
   @doc """

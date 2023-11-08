@@ -4,7 +4,8 @@ defmodule SlackMessenger.Repo.Migrations.CreateMessages do
   def change do
     create table(:messages) do
       add :subject, :string
-      add :body, :string
+      add :body, :text
+      add :slack_ts, :string
 
       timestamps(type: :utc_datetime)
     end

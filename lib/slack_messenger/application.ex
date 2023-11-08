@@ -7,6 +7,8 @@ defmodule SlackMessenger.Application do
 
   @impl true
   def start(_type, _args) do
+    Oban.Telemetry.attach_default_logger()
+
     children = [
       SlackMessengerWeb.Telemetry,
       SlackMessenger.Repo,
@@ -14,6 +16,7 @@ defmodule SlackMessenger.Application do
       {Phoenix.PubSub, name: SlackMessenger.PubSub},
       # Start the Finch HTTP client for sending emails
       {Finch, name: SlackMessenger.Finch},
+      {Oban, Application.fetch_env!(:slack_messenger, Oban)},
       # Start a worker by calling: SlackMessenger.Worker.start_link(arg)
       # {SlackMessenger.Worker, arg},
       # Start to serve requests, typically the last entry

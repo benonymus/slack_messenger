@@ -20,6 +20,11 @@ if System.get_env("PHX_SERVER") do
   config :slack_messenger, SlackMessengerWeb.Endpoint, server: true
 end
 
+config :slack_messenger,
+  slack_webhook_url: System.fetch_env!("SLACK_WEBHOOK_URL"),
+  slack_channel_id: System.fetch_env!("SLACK_CHANNEL_ID"),
+  slack_auth_token: System.fetch_env!("SLACK_AUTH_TOKEN")
+
 if config_env() == :prod do
   database_url =
     System.get_env("DATABASE_URL") ||

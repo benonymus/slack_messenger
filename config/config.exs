@@ -61,6 +61,12 @@ config :logger, :console,
 # Use Jason for JSON parsing in Phoenix
 config :phoenix, :json_library, Jason
 
+# config/config.exs
+config :slack_messenger, Oban,
+  repo: SlackMessenger.Repo,
+  plugins: [Oban.Plugins.Pruner],
+  queues: [post: 100, delete: 100]
+
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.
 import_config "#{config_env()}.exs"
