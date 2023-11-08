@@ -1,0 +1,16 @@
+<.header>
+  Message <%= @message.id %>
+  <:subtitle>This is a message record from your database.</:subtitle>
+  <:actions>
+    <.link href={~p"/messages/#{@message}/edit"}>
+      <.button>Edit message</.button>
+    </.link>
+  </:actions>
+</.header>
+
+<.list>
+  <:item title="Subject"><%= @message.subject %></:item>
+  <:item title="Body"><%= @message.body %></:item>
+</.list>
+
+<.back navigate={~p"/messages"}>Back to messages</.back>
