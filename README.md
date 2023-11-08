@@ -15,3 +15,5 @@ Now you can visit [`localhost:4000`](http://localhost:4000) from your browser.
   * I used the `#sending-messages` channel.
 
   * the api is accessible on `/api` routes with the `x-api-key` header value set to `test_api_key`
+
+  * deployment url on fly: `https://small-mountain-3866.fly.dev`
