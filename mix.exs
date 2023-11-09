@@ -52,7 +52,8 @@ defmodule SlackMessenger.MixProject do
       {:dns_cluster, "~> 0.1.1"},
       {:plug_cowboy, "~> 2.5"},
       {:oban, "~> 2.16"},
-      {:mimic, "~> 1.7", only: :test}
+      {:mimic, "~> 1.7", only: :test},
+      {:castore, "~> 1.0"}
     ]
   end
 
