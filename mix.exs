@@ -53,7 +53,8 @@ defmodule SlackMessenger.MixProject do
       {:plug_cowboy, "~> 2.5"},
       {:oban, "~> 2.16"},
       {:mimic, "~> 1.7", only: :test},
-      {:castore, "~> 1.0"}
+      {:castore, "~> 1.0"},
+      {:req, "~> 0.4.0"}
     ]
   end
 

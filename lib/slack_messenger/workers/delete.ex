@@ -5,27 +5,23 @@ defmodule SlackMessenger.Workers.Delete do
   def perform(%Oban.Job{args: %{"slack_ts" => nil}}), do: :ok
 
   def perform(%Oban.Job{args: %{"slack_ts" => slack_ts}}) do
-    # the request could be built in a utility module, but that might limit future extensibility
-    with request =
-           Finch.build(
-             :post,
-             "#{Application.fetch_env!(:slack_messenger, :slack_webhook_url)}/chat.delete",
-             [
-               {"Content-Type", "application/json; charset=utf-8"},
-               {"Authorization",
-                "Bearer #{Application.fetch_env!(:slack_messenger, :slack_auth_token)}"}
-             ],
-             Jason.encode!(%{
-               channel: Application.fetch_env!(:slack_messenger, :slack_channel_id),
-               ts: slack_ts
-             })
-           ),
-         %Finch.Response{status: 200, body: body} <-
-           Finch.request!(request, SlackMessenger.Finch),
-         %{"ok" => true} <- Jason.decode!(body) do
-      :ok
-    else
-      err -> {:error, err}
+    Req.post!(
+      "#{Application.fetch_env!(:slack_messenger, :slack_webhook_url)}/chat.delete",
+      headers: [
+        {"content-type", "application/json; charset=utf-8"},
+        {"authorization", "Bearer #{Application.fetch_env!(:slack_messenger, :slack_auth_token)}"}
+      ],
+      json: %{
+        channel: Application.fetch_env!(:slack_messenger, :slack_channel_id),
+        ts: slack_ts
+      }
+    )
+    |> case do
+      %Req.Response{status: 200, body: %{"ok" => true}} ->
+        :ok
+
+      resp ->
+        {:error, resp}
     end
   end
 end

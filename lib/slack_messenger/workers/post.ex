@@ -5,29 +5,36 @@ defmodule SlackMessenger.Workers.Post do
 
   @impl true
   def perform(%Oban.Job{args: %{"id" => id}}) do
-    with message = Messages.get_message!(id),
-         {:not_posted, true} <- {:not_posted, is_nil(message.slack_ts)},
-         request =
-           Finch.build(
-             :post,
-             "#{Application.fetch_env!(:slack_messenger, :slack_webhook_url)}/chat.postMessage",
-             [
-               {"Content-Type", "application/json; charset=utf-8"},
-               {"Authorization",
-                "Bearer #{Application.fetch_env!(:slack_messenger, :slack_auth_token)}"}
-             ],
-             Jason.encode!(%{
-               channel: Application.fetch_env!(:slack_messenger, :slack_channel_id),
-               text: message.subject <> "\n" <> message.body
-             })
-           ),
-         %Finch.Response{status: 200, body: body} <-
-           Finch.request!(request, SlackMessenger.Finch),
-         %{"ok" => true, "ts" => slack_ts} <- Jason.decode!(body) do
+    message = Messages.get_message!(id)
+
+    with true <- check_not_posted(message),
+         {:ok, slack_ts} <- make_request(message) do
       Messages.update_message_slack_ts(message, slack_ts)
-    else
-      {:not_posted, false} -> {:cancel, "already posted"}
-      err -> {:error, err}
+    end
+  end
+
+  defp check_not_posted(%Messages.Message{slack_ts: nil}), do: true
+
+  defp check_not_posted(_), do: {:cancel, "already posted"}
+
+  defp make_request(message) do
+    Req.post!(
+      "#{Application.fetch_env!(:slack_messenger, :slack_webhook_url)}/chat.postMessage",
+      headers: [
+        {"content-type", "application/json; charset=utf-8"},
+        {"authorization", "Bearer #{Application.fetch_env!(:slack_messenger, :slack_auth_token)}"}
+      ],
+      json: %{
+        channel: Application.fetch_env!(:slack_messenger, :slack_channel_id),
+        text: message.subject <> "\n" <> message.body
+      }
+    )
+    |> case do
+      %Req.Response{status: 200, body: %{"ok" => true, "ts" => slack_ts}} ->
+        {:ok, slack_ts}
+
+      resp ->
+        {:error, resp}
     end
   end
 end

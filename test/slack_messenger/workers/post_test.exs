@@ -8,8 +8,8 @@ defmodule SlackMessenger.Workers.PostTest do
   test "happy path works" do
     slack_ts = "50000"
 
-    expect(Finch, :request!, 1, fn _, _ ->
-      %Finch.Response{status: 200, body: Jason.encode!(%{"ok" => true, "ts" => slack_ts})}
+    expect(Req, :post!, 1, fn _, _ ->
+      %Req.Response{status: 200, body: %{"ok" => true, "ts" => slack_ts}}
     end)
 
     Oban.Testing.with_testing_mode(:inline, fn ->
@@ -21,5 +21,5 @@ defmodule SlackMessenger.Workers.PostTest do
     end)
   end
 
-  # would add some failing tests too
+  # add some failing tests too
 end
